@@ -1,24 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:cloud="http://www.springframework.org/schema/cloud"
-	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
-		http://www.springframework.org/schema/cloud http://www.springframework.org/schema/cloud/spring-cloud.xsd
-		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.1.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:cloud="http://www.springframework.org/schema/cloud" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+        http://www.springframework.org/schema/cloud http://www.springframework.org/schema/cloud/spring-cloud.xsd">
 
-	    	<cloud:properties id="cloudProperties"/>
 
-		<!-- Depending on services bound to the app, you may uncomment following elements -->
-		<!-- 
-		<cloud:data-source id="dataSource"/>
-		<cloud:mongo-db-factory id="mongoDbFactory"/>
-		<cloud:rabbit-connection-factory id="rabbitConnectionFactory"/>
-		<cloud:redis-connection-factory id="redisConnectionFactory"/>
-	    -->
-	    
-	    <!-- This element will always work regardless of services bound as long as you use @Autowired
-	    		 to grab service connectors -->
-		<cloud:service-scan/>
-	
+
+	<beans profile="default">
+		<jdbc:embedded-database id="dataSource" />
+		<bean id="mongoDbFactory"
+			class="org.springframework.data.mongodb.core.SimpleMongoDbFactory">
+			<constructor-arg>
+				<bean class="com.mongodb.Mongo" />
+			</constructor-arg>
+			<constructor-arg value="hello" />
+		</bean>
+		<bean id="rabbitConnectionFactory"
+			class="org.springframework.amqp.rabbit.connection.CachingConnectionFactory" />
+		<bean id="redis"
+			class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory" />
+	</beans>
+
+	<beans profile="cloud">
+		<cloud:data-source id="dataSource" service-name="manoj-mysql">
+			<cloud:connection properties="sessionVariables=sql_mode='ANSI';characterEncoding=UTF-8" />
+			<cloud:pool pool-size="20" max-wait-time="200" />
+		</cloud:data-source>
+		<cloud:mongo-db-factory id="mongoDbFactory" />
+		<cloud:rabbit-connection-factory id="rabbitConnectionFactory" />
+		<cloud:redis-connection-factory id="redisConnectionFactory" />
+	</beans>
+
 </beans>
